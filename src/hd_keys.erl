@@ -2,13 +2,14 @@
 
 -export([
          master_private_key/2,
-         neuter/1,
          derive_child_key/2,
          derive_private_child_key/2,
          derive_public_child_key/2,
+         neuter/1,
          fingerprint/1,
          serialize/1,
-         encode/1
+         export/1,
+         import/1
         ]).
 
 
@@ -20,14 +21,6 @@ master_private_key(Seed, Version) ->
       depth              => 0,
       version            => Version,
       parent_fingerprint => 0}.
-
-
-neuter(#{private_key:=PrivateKey, version:=Version} = ExtendedKey) ->
-    {PublicKey, _} = bip32:neuter({PrivateKey, 0}),
-    maps:remove(private_key, ExtendedKey#{public_key=>PublicKey, version:=public_version(Version)});
-
-neuter(#{public_key:=_} = ExtendedKey) ->
-    ExtendedKey.
 
 
 derive_child_key(MasterKey, <<"m",_/binary>> = Path) ->
@@ -85,11 +78,16 @@ derive_public_child_key(#{private_key:=PrivateKey, chain_code:=ChainCode, depth:
       parent_fingerprint => fingerprint(ParentKey)}.
 
 
-fingerprint(#{private_key:=PrivateKey}) ->
+neuter(#{private_key:=PrivateKey, version:=Version} = ExtendedKey) ->
     {PublicKey, _} = bip32:neuter({PrivateKey, 0}),
-    bip32:fingerprint(PublicKey);
+    maps:remove(private_key, ExtendedKey#{public_key=>PublicKey, version:=public_version(Version)});
 
-fingerprint(#{public_key:=PublicKey}) ->
+neuter(#{public_key:=_} = ExtendedKey) ->
+    ExtendedKey.
+
+
+fingerprint(ExtendedKey) ->
+    #{public_key:=PublicKey} = neuter(ExtendedKey),
     bip32:fingerprint(PublicKey).
 
 
@@ -100,8 +98,30 @@ serialize(#{public_key:=PublicKey, chain_code:=ChainCode, child_index:=ChildInde
     bip32:serialize_pub({PublicKey, ChainCode}, ChildIndex, Depth, Version, ParentFingerprint).
 
 
-encode(ExtendedKey) ->
+export(ExtendedKey) ->
     base58_utils:version_encode_check(serialize(ExtendedKey)).
+
+
+import(EncodedKey) ->
+    SerializedKey = base58_utils:version_decode_check(EncodedKey),
+    case catch bip32:deserialize_priv(SerializedKey) of
+        invalid_key ->
+            {PublicKey, ChainCode, ChildIndex, Depth, Version, ParentFingerprint} = bip32:deserialize_pub(SerializedKey),
+            #{public_key         => PublicKey,
+              chain_code         => ChainCode,
+              child_index        => ChildIndex,
+              depth              => Depth,
+              version            => Version,
+              parent_fingerprint => ParentFingerprint};
+        Result ->
+            {PrivateKey, ChainCode, ChildIndex, Depth, Version, ParentFingerprint} = Result,
+            #{private_key        => PrivateKey,
+              chain_code         => ChainCode,
+              child_index        => ChildIndex,
+              depth              => Depth,
+              version            => Version,
+              parent_fingerprint => ParentFingerprint}
+    end.
 
 
 % From https://github.com/satoshilabs/slips/blob/master/slip-0132.md

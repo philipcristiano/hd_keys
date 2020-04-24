@@ -9,6 +9,8 @@
          fingerprint/1,
          serialize_priv/5,
          serialize_pub/5,
+         deserialize_priv/1,
+         deserialize_pub/1,
          seed/0,
          master_key/1
         ]).
@@ -67,7 +69,7 @@ ckd_pub({K_par, C_par}, Idx) ->
     if I_L_ >= ?N -> throw(invalid_key); true -> ok end,
     K_i = try
         {ok, K_i_} = libsecp256k1:ec_pubkey_tweak_add(uncompressed_pubkey(K_par), I_L),
-        ok = libsecp256k1:ec_pubkey_verify(K_i_),
+        ok = libsecp256k1:ec_pubkey_verify(K_i_),  % this might be superfluous
         coordinate_pair(K_i_)
     catch
         _:_ -> throw(invalid_key)
@@ -107,6 +109,28 @@ serialize_pub({K, C}, Idx, Depth, Version, ParentFingerprint) ->
 
 serialize(Version, Depth, ParentFingerprint, ChildNumber, ChainCode, KeyData) ->
     <<Version:32, Depth:8, ParentFingerprint:32, ChildNumber:4/binary, ChainCode:32/binary, KeyData:33/binary>>.
+
+
+deserialize_priv(<<Version:32, Depth:8, ParentFingerprint:32, ChildIndex:32, ChainCode:32/binary, KeyData:33/binary>>) ->
+    try
+        <<0:8, Key:32/binary>> = KeyData,
+        %ok = libsecp256k1:ec_seckey_verify(Key),  this NIF causes corruption of Key
+        PrivateKey = parse_256(Key),
+        {PrivateKey, ChainCode, ChildIndex, Depth, Version, ParentFingerprint}
+    catch
+        _:_ -> throw(invalid_key)
+    end.
+
+
+deserialize_pub(<<Version:32, Depth:8, ParentFingerprint:32, ChildIndex:32, ChainCode:32/binary, KeyData:33/binary>>) ->
+    try
+        {ok, Key} = libsecp256k1:ec_pubkey_decompress(KeyData),
+        ok = libsecp256k1:ec_pubkey_verify(Key),  % this might be superfluous
+        PublicKey = coordinate_pair(Key),
+        {PublicKey, ChainCode, ChildIndex, Depth, Version, ParentFingerprint}
+    catch
+        _:_ -> throw(invalid_key)
+    end.
 
 
 seed() ->
