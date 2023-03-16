@@ -12,6 +12,7 @@
          deserialize_priv/1,
          deserialize_pub/1,
          seed/0,
+         ser_P/1,
          master_key/1
         ]).
 

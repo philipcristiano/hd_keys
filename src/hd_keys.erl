@@ -8,6 +8,7 @@
          neuter/1,
          fingerprint/1,
          serialize/1,
+         serialize_public_key/1,
          export/1,
          import/1
         ]).
@@ -97,6 +98,8 @@ serialize(#{private_key:=PrivateKey, chain_code:=ChainCode, child_index:=ChildIn
 serialize(#{public_key:=PublicKey, chain_code:=ChainCode, child_index:=ChildIndex, depth:=Depth, version:=Version, parent_fingerprint:=ParentFingerprint}) ->
     bip32:serialize_pub({PublicKey, ChainCode}, ChildIndex, Depth, Version, ParentFingerprint).
 
+serialize_public_key(#{public_key:=PublicKey}) ->
+    bip32:ser_P(PublicKey).
 
 export(ExtendedKey) ->
     base58_utils:version_encode_check(serialize(ExtendedKey)).
