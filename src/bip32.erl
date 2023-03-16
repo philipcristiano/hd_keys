@@ -48,8 +48,8 @@ parse_256(P) ->
 
 ckd_priv({K_par, C_par}, Idx) ->
     I = case Idx >= ?HARDENED_INDEX_START of
-        true  -> crypto:hmac(sha512, C_par, [<<0:8>>, ser_256(K_par), ser_32(Idx)]);
-        false -> crypto:hmac(sha512, C_par, [ser_P(point(K_par)), ser_32(Idx)])
+        true  -> crypto:mac(hmac, sha512, C_par, [<<0:8>>, ser_256(K_par), ser_32(Idx)]);
+        false -> crypto:mac(hmac, sha512, C_par, [ser_P(point(K_par)), ser_32(Idx)])
     end,
     {I_L, I_R} = split(I),
     I_L_ = parse_256(I_L),
@@ -64,7 +64,7 @@ ckd_pub({_, _}, Idx) when Idx >= ?HARDENED_INDEX_START ->
     throw(undefined_for_hardened_child);
 
 ckd_pub({K_par, C_par}, Idx) ->
-    I = crypto:hmac(sha512, C_par, [ser_P(K_par), ser_32(Idx)]),
+    I = crypto:mac(hmac, sha512, C_par, [ser_P(K_par), ser_32(Idx)]),
     {I_L, I_R} = split(I),
     I_L_ = parse_256(I_L),
     if I_L_ >= ?N -> throw(invalid_key); true -> ok end,
@@ -139,7 +139,7 @@ seed() ->
 
 
 master_key(S) ->
-    I = crypto:hmac(sha512, <<"Bitcoin seed">>, S),
+    I = crypto:mac(hmac, sha512, <<"Bitcoin seed">>, S),
     {I_L, I_R} = split(I),
     I_L_ = parse_256(I_L),
     if I_L_ == 0 orelse I_L_ >= ?N -> throw(invalid_key); true -> ok end,

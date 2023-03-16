@@ -1,10 +1,23 @@
-{"1.1.0",
+{"1.2.0",
 [{<<"base58">>,{pkg,<<"ae_erl_base58">>,<<"0.0.3">>},0},
+ {<<"ec_utils">>,
+  {git,"https://github.com/hanssv/ec_utils.git",
+       {ref,"9db7c9220ed6e2270d948514c65822be588ac04c"}},
+  0},
+ {<<"hex2bin">>,{pkg,<<"hex2bin">>,<<"1.0.0">>},2},
  {<<"libsecp256k1">>,
   {git,"git@github.com:chrisdevilliers/libsecp256k1.git",
        {ref,"be8ae60366b19f6254b06e50273e7b1e95d33cdb"}},
-  0}]}.
+  0},
+ {<<"sha3">>,
+  {git,"https://github.com/aeternity/erlang-sha3",
+       {ref,"b5f27a29ba1179e5907c50d7ec7aa79b2857e981"}},
+  1}]}.
 [
 {pkg_hash,[
- {<<"base58">>, <<"5442A3C2A05165336D3F9013E1C0DF0CD36A58843CFC4D1C9C0EFD98F364A1BF">>}]}
+ {<<"base58">>, <<"5442A3C2A05165336D3F9013E1C0DF0CD36A58843CFC4D1C9C0EFD98F364A1BF">>},
+ {<<"hex2bin">>, <<"AAC26EAB998AE80EACEE1C7607C629AB503EBF77A62B9242BAE2B94D47DCB71E">>}]},
+{pkg_hash_ext,[
+ {<<"base58">>, <<"1F868FF19F7F16AD2BE4963210D3B0BB310BE175A2054038397107B7DA876B5E">>},
+ {<<"hex2bin">>, <<"E7012D1D9AADD26E680F0983D26FB8923707F05FAC9688F19F530FA3795E716F">>}]}
 ].
